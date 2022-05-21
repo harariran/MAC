@@ -25,8 +25,9 @@ class CentralizedController(Controller):
         # Dict to list:
         for agent_name in self.agents.keys():
             observations.append(observation[agent_name])
+        # todo fix False
+        state = self.decode_state(observations, False)
 
-        state = self.decode_state(observations, self.environment.get_needs_conv())
         # centerlized decision making
         joint_act = self.central_agent.decision_maker.get_action(state)
         joint_act = self.decode_action(joint_act, self.environment.get_num_actions(),

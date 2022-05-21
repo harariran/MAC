@@ -1,5 +1,5 @@
-class EnvWrappper:
 
+class EnvWrappper:
     def __init__(self, env, env_agents, num_observation_spaces=1, num_actions=1):
         self.env = env
         self.env_agents = env_agents
@@ -22,11 +22,12 @@ class EnvWrappper:
         return self.env.step(joint_action)
 
 
-
 class EnvWrappperGym:
 
     def __init__(self, env, needs_conv=False):
-        super(EnvWrappperGym, self).__init__(env, self.env.possible_agents, self.env.observation_spaces[env.possible_agents[0]].shape, self.env.action_spaces[env.possible_agents[0]].n)
+        super(EnvWrappperGym, self).__init__(env, self.env.possible_agents,
+                                             self.env.observation_spaces[env.possible_agents[0]].shape,
+                                             self.env.action_spaces[env.possible_agents[0]].n)
         self.needs_conv = needs_conv
 
     def get_needs_conv(self):

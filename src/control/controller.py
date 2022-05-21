@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import matplotlib.pyplot as plt
 
 
 class Controller(ABC):
@@ -28,12 +29,15 @@ class Controller(ABC):
             if max_iteration is not None and index > max_iteration:
                 break
 
-            # display environment
-            if render:
-                self.environment.get_env().render()
-
             # get actions for each agent to perform
             joint_action = self.get_joint_action(observation)
+
+            # display environment
+            if render:
+                env_str = self.environment.get_env().render()
+                self.render_obs_next_action(joint_action,observation)
+
+            # perform agents actions
             observation, reward, done, info = self.perform_joint_action(joint_action)
             self.total_rewards.append(reward)
             done = all(value == True for value in done.values())
@@ -48,3 +52,17 @@ class Controller(ABC):
 
     def get_joint_action(self, observation):
         pass
+
+    def render_obs_next_action(self, joint_action, observation):
+        fig = plt.figure(figsize=(16,4))
+
+        i = 1
+        for agent_name in self.agents.keys():
+            title = str(agent_name) + ": " + str(self.environment.get_env().index_action_dictionary[joint_action[agent_name]])
+
+            ax = fig.add_subplot(1, len(self.agents), i)
+            i += 1
+            plt.title(title)
+            ax.imshow(observation[agent_name])
+
+        plt.show()
