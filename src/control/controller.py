@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
+import numpy
 
 
 class Controller(ABC):
@@ -35,7 +36,8 @@ class Controller(ABC):
             # display environment
             if render:
                 env_str = self.environment.get_env().render()
-                self.render_obs_next_action(joint_action,observation)
+                # todo check obs type - if image False, symbolic-True
+                self.render_obs_next_action(joint_action,observation,True)
 
             # perform agents actions
             observation, reward, done, info = self.perform_joint_action(joint_action)
@@ -53,16 +55,24 @@ class Controller(ABC):
     def get_joint_action(self, observation):
         pass
 
-    def render_obs_next_action(self, joint_action, observation):
-        fig = plt.figure(figsize=(16,4))
+    def render_obs_next_action(self, joint_action, observation, symbolic=True):
 
-        i = 1
-        for agent_name in self.agents.keys():
-            title = str(agent_name) + ": " + str(self.environment.get_env().index_action_dictionary[joint_action[agent_name]])
+        # if  isinstance(list(observation.values())[0], numpy.ndarray) :
 
-            ax = fig.add_subplot(1, len(self.agents), i)
-            i += 1
-            plt.title(title)
-            ax.imshow(observation[agent_name])
+        if symbolic:
 
-        plt.show()
+            for agent_name in self.agents.keys():
+                print(f"{agent_name} obs:\n {observation[agent_name]} , action: {self.environment.get_env().index_action_dictionary[joint_action[agent_name]]}")
+
+        else:
+            print(f"{ type(list(observation.values())[0])}")
+            fig = plt.figure(figsize=(16,4))
+            i = 1
+            for agent_name in self.agents.keys():
+                title = str(agent_name) + ": " + str(self.environment.get_env().index_action_dictionary[joint_action[agent_name]])
+
+                ax = fig.add_subplot(1, len(self.agents), i)
+                i += 1
+                plt.title(title)
+                ax.imshow(observation[agent_name])
+            plt.show()

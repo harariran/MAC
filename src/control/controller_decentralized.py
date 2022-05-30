@@ -21,6 +21,7 @@ class DecentralizedController(Controller):
 
         joint_action = {}
         for agent_name in self.agents.keys():
+            print(f"{observation[agent_name]}")       # check use
             action = self.agents[agent_name].get_decision_maker().get_action(observation[agent_name])
             joint_action[agent_name] = action
             # print(f"agent:{agent_name}, action: {action}\n")
