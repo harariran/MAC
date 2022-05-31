@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
 import numpy
+from gym.spaces import Box
 
 
 class Controller(ABC):
@@ -12,6 +13,7 @@ class Controller(ABC):
     def __init__(self, environment, agents):
         self.environment = environment
         self.agents = agents
+        self.__is_image_obs = isinstance(self.environment.get_env().observation_space, Box)
 
     def run(self, render=False, max_iteration=None):
         """Runs the controller on the environment given in the init,
@@ -37,7 +39,7 @@ class Controller(ABC):
             if render:
                 env_str = self.environment.get_env().render()
                 # todo check obs type - if image False, symbolic-True
-                self.render_obs_next_action(joint_action,observation,True)
+                self.render_obs_next_action(joint_action,observation,not self.__is_image_obs)
 
             # perform agents actions
             observation, reward, done, info = self.perform_joint_action(joint_action)

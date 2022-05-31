@@ -1,9 +1,56 @@
 from gym import Wrapper
-from gym.spaces import MultiDiscrete
+from gym.spaces import MultiDiscrete, Discrete
 # 'Deep Model Related Imports'
 from torch.nn.functional import one_hot
 import torch
 import numpy as np
+
+#
+# class ObsWrapper(Wrapper):
+#     def reset(self, **kwargs):
+#         obs = self.env.reset(**kwargs)
+#
+#         # alter obs
+#
+#         return obs
+#
+#     def step(self, action):
+#         obs, other_rets = self.env.step(action)
+#
+#         # alter obs
+#
+#         return obs, other_rets
+#
+#
+# class AddActionWrapper(Wrapper):
+#     def __init__(self, env):
+#         super().__init__(env)
+#
+#         self.space_size = self.env.action_space.n
+#
+#     def action_space(self):
+#         return Discrete(self.space_size + 3)
+#
+#     def step(self, action):
+#         changed_taxi_actions = {}
+#         for taxi in action:
+#             if action[taxi] == new action:
+#                 changed_taxi_actions[taxi] = action[taxi]
+#                 action[taxi] = standby
+#
+#         ret_vals = self.env.step(action)
+#
+#         # do new actions for taxis chagned
+#
+#         # update ret_vals
+#
+#         # return ret_Valsz
+#
+#
+#         if action > self.space_size:
+#             x = 2  # do new action step
+#         else:
+#             return self.env.step(action)
 
 
 class SingleTaxiWrapper(Wrapper):
