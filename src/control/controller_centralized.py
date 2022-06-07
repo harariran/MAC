@@ -29,7 +29,7 @@ class CentralizedController(Controller):
         state = self.decode_state(observations, False)
 
         # centerlized decision making
-        joint_act = self.central_agent.decision_maker.get_action(state)
+        joint_act = self.central_agent.Delivery_target_type.get_action(state)
         joint_act = self.decode_action(joint_act, self.environment.get_num_actions(),
                                        len(self.environment.get_env_agents()))
         joint_action = {}

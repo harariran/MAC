@@ -6,20 +6,50 @@ import torch
 import numpy as np
 
 #
-# class ObsWrapper(Wrapper):
-#     def reset(self, **kwargs):
-#         obs = self.env.reset(**kwargs)
-#
-#         # alter obs
-#
-#         return obs
-#
-#     def step(self, action):
-#         obs, other_rets = self.env.step(action)
-#
-#         # alter obs
-#
-#         return obs, other_rets
+class ObsWrapper(Wrapper):
+
+    def __init__(self, env):
+        super().__init__(env)
+        self.map_h = len(self.unwrapped.desc) - 2 - 1
+        self.map_w = (len(self.unwrapped.desc[0]) - 1) #// 2 - 1
+        self.map_full_obs()
+        self.full_map[1,2] = 2
+
+    def reset(self):
+        return self._obs_prep(self.env.reset())
+
+    def map_full_obs(self):
+        self.full_map = np.zeros((self.map_h, self.map_w),dtype=int)
+        a, b, _, c, d = self.unwrapped.state
+        self.unwrapped.state = [a, b, [[0, 0]], c, d]
+        # self.full_map_set = np.array(dtype=set)
+        # self.full_map_set[0,0] = {"one"}
+
+
+    def step(self, action):
+        obs, r, d, i = self.env.step(action)
+        return self._obs_prep(obs), r, d, i
+
+    def _obs_prep(self, obs):
+        taxi_and_pass = obs[:-self.unwrapped.num_passengers]
+        pass_stat = obs[-self.unwrapped.num_passengers:]
+        self.state = self.env.unwrapped
+
+        # taxi_and_pass[::2] = taxi_and_pass[::2] / self.map_h
+        # taxi_and_pass[1::2] = taxi_and_pass[1::2] / self.map_w
+        # pass_stat = one_hot(torch.from_numpy(pass_stat).to(torch.int64) - 1,
+        #                     num_classes=3).flatten().numpy().astype(
+        #     np.float64)
+        return np.concatenate([taxi_and_pass, pass_stat])
+
+    @property
+    def observation_space(self):
+        obs_space_v = self.env.observation_space.nvec
+        taxi_pass_info = obs_space_v[:-self.unwrapped.num_passengers]
+        new_obs_space_v = np.concatenate([taxi_pass_info,
+                                          [2] * (self.unwrapped.num_taxis + 2) * self.unwrapped.num_passengers])
+
+        return MultiDiscrete(new_obs_space_v)
 #
 #
 # class AddActionWrapper(Wrapper):
