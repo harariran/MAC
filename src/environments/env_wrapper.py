@@ -1,3 +1,9 @@
+"""
+Wrappers for Multi-Taxi domain
+many types of decoders
+"""
+
+
 from gym import Wrapper
 from gym.spaces import MultiDiscrete, Discrete
 # 'Deep Model Related Imports'
@@ -5,7 +11,7 @@ from torch.nn.functional import one_hot
 import torch
 import numpy as np
 
-#
+
 class ObsWrapper(Wrapper):
 
     def __init__(self, env):
@@ -81,7 +87,6 @@ class ObsWrapper(Wrapper):
 #             x = 2  # do new action step
 #         else:
 #             return self.env.step(action)
-
 
 class SingleTaxiWrapper(Wrapper):
     """

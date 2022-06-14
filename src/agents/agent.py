@@ -35,7 +35,7 @@ class Agent_Com(Agent, ABC):
         return data
 
     @abstractmethod
-    def set_data_func(self, obs):
+    def set_data_func(self, obs=None):
         pass
 
     def transmit(self,obs = None, **kwargs):
@@ -80,11 +80,6 @@ class Action_message_agent(Agent_Com):
     def set_data_func(self, obs):
         data = self.last_action
         return data
-
-
-
-
-
 
 
 """

@@ -1,61 +1,81 @@
 from gym.spaces import Box
-
 from src.control.controller import Controller
-
 from src.Communication.COM_net import COM_net
 from src.agents.agent import Agent_Com, Action_message_agent
-
 from src.agents.agent import Agent, RandomDecisionMaker
 from src.environments.env_wrapper import EnvWrappper, EnvWrappperGym
 from multi_taxi.taxi_environment import TaxiEnv
 
 
 class DecentralizedComController(Controller):
+    """
+    Class DecentralizedComController
+        implements communication module
+        act as a post-office/com-network according to possible com. settings
+        inherit all aspects of a controller to serve as a layer between the agents and the environment
+        decentralized control enabled
+        input:
+            - env - environment
+            - Agents - com agents
+            - com module
+    """
 
-    def __init__(self, env, agents : Agent_Com, COM_model : COM_net = None):
+    def __init__(self, env, agents : Agent_Com, COM_model : COM_net = COM_net()):
         # initialize super class
         super().__init__(env, agents)
         self.COM_model = COM_model
+
+        # checks if observation space is an image/box
         self.__is_image_obs = isinstance(self.environment.get_env().observation_space, Box)
 
     def get_joint_action_messages(self, observation):
-        """Returns the joint action
+        """Returns the joint action with messages
 
         Args:
             observation (dict): the current observatins
 
         Returns:
-            dict: the actions for the agents
+            dict: the actions for all agent and the messages of all agents
         """
         joint_action = {}
         joint_message = []
         for agent_name in self.agents.keys():
-            print(f"{observation[agent_name]}")       # check use
+            # print(f"{observation[agent_name]}")       # check use
             action = self.agents[agent_name].get_decision_maker().get_action(observation[agent_name])
             joint_action[agent_name] = action
             self.agents[agent_name].set_last_action(action)
             joint_message.append( self.agents[agent_name].transmit())
+            # print(f"agent:{agent_name}, action: {action}\n")        # check use
 
-            # print(f"agent:{agent_name}, action: {action}\n")
-
-        # if self.render:
+        # if self.render:                                             # use only for image obs
         #     self.render_obs_next_action(joint_action,observation)
 
         return joint_action, list(joint_message)
 
 
 
-    def run(self, render=False, max_iteration=None):
+    def run(self, render=False, max_iteration=None, reset=False):
         """Runs the controller on the environment given in the init,
         with the agents given in the init
 
+        at any 'time step' (in this order):
+            1. takes all observations of the agents from the env.
+            2. get from each agent - its action and next message according to its obs
+            3. perform joint action on the env (and save rewards of all)
+            4  send messages to agents according to com module
+
+
         Args:
-            render (bool, optional): Whether to render while runngin. Defaults to False.
+            render (bool, optional): Whether to render while running. Defaults to False.
             max_iteration ([type], optional): Number of steps to run. Defaults to infinity.
+            reset (bool, optional): if obs/env needed to be reset at start. Defaults to False.
         """
         done = False
         index = 0
-        observation = self.environment.get_env().reset()
+        if reset:
+            observation = self.environment.get_env().reset()
+
+        else: observation = self.environment.get_env().observation_spaces
         self.total_rewards = []
         while done is not True:
             index += 1
@@ -69,7 +89,8 @@ class DecentralizedComController(Controller):
             # display environment
             if render:
                 env_str = self.environment.get_env().render()
-                print(f"joint M: {joint_message}")
+                print(f"joint M: {[x.data for x in joint_message]}")
+                # print(f"joint M: {[self.environment.get_env().index_action_dictionary[x.data] for x in joint_message]}")
                 # todo check obs type - if image False, symbolic-True
                 self.render_obs_next_action(joint_action,observation,not self.__is_image_obs)
 
@@ -88,7 +109,7 @@ class DecentralizedComController(Controller):
         if render:
             self.environment.get_env().render()
 
-    # def render_obs_next_action(self, joint_action, observation):
+    # def render_obs_next_action(self, joint_action, observation):            #use for image obs
     #     fig = plt.figure(figsize=(17,4))
     #     i=1
     #     temp_taxi_env = TaxiEnv(num_taxis=3, observation_type="image")
