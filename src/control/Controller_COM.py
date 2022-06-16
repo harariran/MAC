@@ -89,7 +89,7 @@ class DecentralizedComController(Controller):
         index = 0
         if reset:
             observation = self.environment.get_env().reset()
-
+            self.environment.get_env().render()
         else: observation = self.environment.get_env().observation_spaces
         self.total_rewards = []
         while done is not True:
@@ -101,9 +101,8 @@ class DecentralizedComController(Controller):
             joint_action , joint_message  = self.get_joint_action_messages(observation)
 
 
-            # display environment
+            # display action/messages
             if render:
-                env_str = self.environment.get_env().render()
                 print(f"joint M: {[x.data for x in joint_message]}")
                 # print(f"joint M: {[self.environment.get_env().index_action_dictionary[x.data] for x in joint_message]}")
                 # todo check obs type - if image False, symbolic-True
@@ -116,10 +115,16 @@ class DecentralizedComController(Controller):
             if done:
                 break
 
+
+
             # recieve messages:
             out_message_dict = self.COM_model.update_delievery(joint_message,self.agents)
             for agent_name in self.agents.keys():
                 self.agents[agent_name].recieve(observation[agent_name],out_message_dict[agent_name])
+
+            # display new env
+            if render:
+                self.environment.get_env().render()
 
         if render:
             self.environment.get_env().render()

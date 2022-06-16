@@ -54,10 +54,10 @@ TAXI_pickup_dropoff_REWARDS = dict(
 Builds Multi_taxi env
 """
 m = MAP2
-env = MultiTaxiEnv(num_taxis=2, num_passengers=2, domain_map=m, observation_type='symbolic',rewards_table=TAXI_pickup_dropoff_REWARDS)
+env = MultiTaxiEnv(num_taxis=2, num_passengers=3, domain_map=m, observation_type='symbolic',rewards_table=TAXI_pickup_dropoff_REWARDS) #,option_to_stand_by=True)
 
 # env = SingleTaxiWrapper(env)
-obs = env.reset()
+# obs = env.reset()
 
 # env.render()
 
@@ -134,6 +134,6 @@ activate
 #communicate first
 controller.send_recieve()
 #run (communication inside after each time_clicl
-controller.run(render=True, max_iteration=20)
+controller.run(render=True, max_iteration=50,reset=True)
 print("Thats all")
 

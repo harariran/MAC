@@ -260,39 +260,55 @@ class Astar_message_DM(DecisionMaker):
             self.defualt_action = env.action_space.n-1
         else: self.defualt_action = 0
         self.last_message = None
-        self.changed = True
+        self.changed = False
         self.space = env.action_space
         self.init_state = env.state
-        if single_plan:
-            self.init_state = [[self.init_state[0][Taxi_index]],[self.init_state[1][Taxi_index]],self.init_state[2], self.init_state[3],self.init_state[4]]
-        self.map_problem = MapProblem(env, list_to_tuple(self.init_state))
-        # map_problem.set_state(self.init_state)
-        env.render()
+        self.single_plan = single_plan
+        self.Taxi_index = Taxi_index
+        # if self.single_plan:
+        #     self.init_state = [[self.init_state[0][self.Taxi_index]],[self.init_state[1][self.Taxi_index]],self.init_state[2], self.init_state[3],self.init_state[4]]
+        # self.map_problem = MapProblem(env, list_to_tuple(self.init_state))
+        # # map_problem.set_state(self.init_state)
+        # env.render()
         self.plans = []
         self.map = domain_map
         self.active_plan = []
         self.activeted = False
         self.no_more_plans = False
-        try:
-            self.train_plans()
-            self.activeted = True
-        except : "no plan detected"
+        self.taking_passenger = None
 
 
     def get_action(self, observation):
-        if self.changed ==True:
-            self.updateplan_message(self.last_message)
-        state = obs_to_state(observation)
+        self.init_state = obs_to_state(observation)
+        if self.single_plan:
+            temp = [x for x in self.init_state[4]]
+            self.init_state = [self.init_state[0], self.init_state[1],self.init_state[2], self.init_state[3], temp]
+        if (len(self.active_plan) == 0):
+            try:
+                self.plans = []
+                self.replan()
+                self.activeted = True
+            except:
+                print("no plan found")
+        if (self.updateplan_message(self.last_message)):
+            try:
+                self.active_plan = []
+                self.plans = []
+                self.replan()
+                self.activeted = True
+            except:
+                print("no plan found")
         # check active plan for replan
-        if len(self.active_plan) == 0:
-            self.replan(state)
-            self.updateplan_message(self.last_message)
-        else:
-            if not self.activeted:
-                if is_state_equal(list_to_tuple(state), self.map_problem.get_state()): self.activeted = True
-                else: self.replan(state)
+        # if len(self.active_plan) == 0:
+        #     self.updateplan_message(self.last_message)
+        #     self.replan(self.state)
+        # else:
+        #     if not self.activeted:
+        #         if is_state_equal(list_to_tuple(state), self.map_problem.get_state()): self.activeted = True
+        #         else: self.replan(state)
         if self.no_more_plans:
             print("no action available - using defualt")
+            self.taking_passenger = 0
             return self.defualt_action
         action = int(self.active_plan.pop(0)[1])
         return action
@@ -365,10 +381,8 @@ class Astar_message_DM(DecisionMaker):
         # self.plans = joint_simulation(s,mah,print_simulation=True)
         self.get_short_term_plans(s,mah,print_simulation=False)
 
-    def replan(self,state):
+    def replan(self):
         # replan after current plan has ended
-        self.plans = []
-        self.init_state = state
         self.train_plans()
         self.activeted = True
 
@@ -376,15 +390,17 @@ class Astar_message_DM(DecisionMaker):
         # fix plan according to other Texis messages
         my_plan_size = len(self.active_plan)
         if my_plan_size==0:
-            print("no plan for me")
-            return
+            print("no plan for me , no need to check plan w others")
+            return False
         for m in message:
             d = m.data
             if d[0]==self.taking_passenger:
                 if my_plan_size>d[1]:
                     self.init_state[4] = list(self.init_state[4])
                     self.init_state[4][d[0]-1]=1
-                    self.replan(self.init_state)
+                    return True
+        return False
+
 
 
 
@@ -434,4 +450,4 @@ if __name__ == '__main__':
     # # In[14]:
     com = COM_net()
     controller = DecentralizedComController(environment, decentralized_agents,com)
-    controller.run(render=True, max_iteration=10)
+    controller.run(render=True, max_iteration=30)
