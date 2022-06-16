@@ -96,6 +96,8 @@ class DecentralizedComController(Controller):
             index += 1
             if max_iteration is not None and index > max_iteration:
                 break
+            if render:
+                print(f"---------------------------ROUND {index}---------------------------------")
 
             # get actions for each agent to perform, and messages
             joint_action , joint_message  = self.get_joint_action_messages(observation)
@@ -103,7 +105,7 @@ class DecentralizedComController(Controller):
 
             # display action/messages
             if render:
-                print(f"joint M: {[x.data for x in joint_message]}")
+                print(f"joint Message: {[x.data for x in joint_message]}")
                 # print(f"joint M: {[self.environment.get_env().index_action_dictionary[x.data] for x in joint_message]}")
                 # todo check obs type - if image False, symbolic-True
                 self.render_obs_next_action(joint_action,observation,not self.__is_image_obs)

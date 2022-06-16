@@ -26,7 +26,7 @@ from multi_taxi import MultiTaxiEnv
 from AI_agents.Search.best_first_search import breadth_first_search, a_star
 from src.decision_makers.planners.MAP import MapProblem
 from copy import deepcopy
-
+from colorama import Fore, Style
 
 MAP2 = [
     "+-------+",
@@ -36,6 +36,28 @@ MAP2 = [
     "| | :G| |",
     "+-------+",
 ]
+
+Pass_color_dict = {
+    0 : 'None' ,
+    1 : 'Yellow' ,
+    2 : 'Red' ,
+    3 : 'White' ,
+    4 : 'Green' ,
+    5 : 'Cyan' ,
+    6 : 'Blue' ,
+    7 : 'Magneta'
+}
+
+Text_color = {
+    0 : Fore.BLACK ,
+    1 : Fore.YELLOW ,
+    2 : Fore.RED ,
+    3 : Fore.WHITE,
+    4 : Fore.GREEN ,
+    5 : Fore.CYAN,
+    6 : Fore.BLUE,
+    7 : Fore.MAGENTA
+}
 
 
 """
@@ -92,6 +114,25 @@ def run_plan(state, plan, problem):
         problem.env.render()
 
     return new_state
+
+def str_to_int(s):
+    return int(''.join(x for x in s if x.isdigit()))
+
+def plan_2_pass(plan):
+    """
+    takes a plan and return a tuple of (pass that is taking, lenght)
+    """
+    p = str_to_int(plan[-1])-4
+    l = len(plan)
+    return (p,l)
+
+def plan_2_color_pass(plan):
+    """
+    takes a plan and return a tuple of (pass that is taking, lenght)
+    """
+    p = str_to_int(plan[-1])-4
+    l = len(plan)
+    return (Pass_color_dict[p],l)
 
 
 
@@ -196,7 +237,6 @@ def obs_to_state(obs):
 def manhattan_distance(p, q):
     return abs(p[0] - q[0]) + abs(p[1] - q[1])
 
-
 def manhattan_heuristic(taxi_id, taxi_src, passenger_src, passenger_dst, passenger_status):
     """
     manhatten distance to from the taxi's source to the passenger's source, and from there to the passenger's destination
@@ -233,10 +273,12 @@ def is_state_equal(state1, state2):
 
 """ fix path of a single taxi to a specific (i) passenger (correct dropoffx action"""
 def fix_path_dropoff(path,index):
-    num_pass = int(path[-1][1]) + index
+    num_pass = str_to_int(path[-1]) + index
     st = "(" + str(num_pass) + ",)"
     path[-1] = st
     return path
+
+
 
 
 class Astar_message_DM(DecisionMaker):
@@ -249,7 +291,7 @@ class Astar_message_DM(DecisionMaker):
         domain_map - important - make sure it is equal to env map
 
     output:
-        - create set of plans from the taxi (i) to each paaenger
+        - create set of plans from the taxi (i) to each passenger
         - defualt - chooses the shortest plan as active plan
         - at each get_action() - pops the next action from the actice plan
         - when dropoff (out of active_plan) -> replan for the next available passengers
@@ -265,11 +307,6 @@ class Astar_message_DM(DecisionMaker):
         self.init_state = env.state
         self.single_plan = single_plan
         self.Taxi_index = Taxi_index
-        # if self.single_plan:
-        #     self.init_state = [[self.init_state[0][self.Taxi_index]],[self.init_state[1][self.Taxi_index]],self.init_state[2], self.init_state[3],self.init_state[4]]
-        # self.map_problem = MapProblem(env, list_to_tuple(self.init_state))
-        # # map_problem.set_state(self.init_state)
-        # env.render()
         self.plans = []
         self.map = domain_map
         self.active_plan = []
@@ -279,6 +316,8 @@ class Astar_message_DM(DecisionMaker):
 
 
     def get_action(self, observation):
+        if self.no_more_plans:
+            return self.defualt_action
         self.init_state = obs_to_state(observation)
         if self.single_plan:
             temp = [x for x in self.init_state[4]]
@@ -289,15 +328,16 @@ class Astar_message_DM(DecisionMaker):
                 self.replan()
                 self.activeted = True
             except:
-                print("no plan found")
+                print(f"agent_{self.Taxi_index}: no plan found")
         if (self.updateplan_message(self.last_message)):
             try:
+                print(Text_color[self.Taxi_index+1] + "changing plan acording to message" + Fore.BLACK)
                 self.active_plan = []
                 self.plans = []
                 self.replan()
                 self.activeted = True
             except:
-                print("no plan found")
+                print(f"agent_{self.Taxi_index}: no plan found")
         # check active plan for replan
         # if len(self.active_plan) == 0:
         #     self.updateplan_message(self.last_message)
@@ -307,10 +347,10 @@ class Astar_message_DM(DecisionMaker):
         #         if is_state_equal(list_to_tuple(state), self.map_problem.get_state()): self.activeted = True
         #         else: self.replan(state)
         if self.no_more_plans:
-            print("no action available - using defualt")
+            print(f"agent_{self.Taxi_index}: no action available - using defualt")
             self.taking_passenger = 0
             return self.defualt_action
-        action = int(self.active_plan.pop(0)[1])
+        action = str_to_int(self.active_plan.pop(0))
         return action
 
     def save_last_message(self, message):
@@ -341,7 +381,7 @@ class Astar_message_DM(DecisionMaker):
         taxi_P = MultiTaxiEnv(num_taxis=1, num_passengers=1, domain_map=self.map)
 
         if len(init_states) == 0:
-            print("no plan / no more available passengers")
+            # print(f"agent_{self.Taxi_index}: no plan / no more available passengers")
             self.no_more_plans = True
         for i in range(len(init_states)):
             if (i in finished_pass): continue
@@ -359,17 +399,19 @@ class Astar_message_DM(DecisionMaker):
                 path = fix_path_dropoff(path,i)
                 self.plans.append(path)
             else:
-                print(f"no plan found for passenger {i}")
+                print(f"agent_{self.Taxi_index}: no available plan found for passenger {i}")
 
         if len(self.plans)==0:
-            print ("no available plan was found")
+            print (f"agent_{self.Taxi_index}: no available plan was found (for all)")
             self.no_more_plans = True
             return
         # set shortest plan as active plan
         self.active_plan = min(self.plans,key=len )
-        self.taking_passenger = int(self.active_plan[-1][1])-4
-        print(f"active:{self.active_plan}")
-        print(f"all plans:{self.plans}")
+        self.taking_passenger = plan_2_pass(self.active_plan)[0]
+        print(Text_color[self.Taxi_index+1] + f"{Pass_color_dict[self.Taxi_index+1]} Taxi_{self.Taxi_index} (re)planning results:")
+        print("  # taking " + Text_color[self.taking_passenger] + f"{Pass_color_dict[self.taking_passenger]} passenger"
+              + Fore.BLACK + f", len. of plan: {len(self.active_plan)} -> active:{self.active_plan}")
+        print(f"  # all plans:{[plan_2_color_pass(p) for p in self.plans]}" + Fore.BLACK)
 
     """
     train_plans - u can implement any other planning method - and use it instead of get_short_term_plans()

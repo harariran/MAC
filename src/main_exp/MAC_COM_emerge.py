@@ -53,8 +53,8 @@ TAXI_pickup_dropoff_REWARDS = dict(
 """
 Builds Multi_taxi env
 """
-m = MAP2
-env = MultiTaxiEnv(num_taxis=2, num_passengers=3, domain_map=m, observation_type='symbolic',rewards_table=TAXI_pickup_dropoff_REWARDS) #,option_to_stand_by=True)
+m = MAP
+env = MultiTaxiEnv(num_taxis=3, num_passengers=5, domain_map=m, observation_type='symbolic',rewards_table=TAXI_pickup_dropoff_REWARDS ,option_to_stand_by=True)
 
 # env = SingleTaxiWrapper(env)
 # obs = env.reset()
@@ -133,7 +133,8 @@ activate
 """
 #communicate first
 controller.send_recieve()
-#run (communication inside after each time_clicl
-controller.run(render=True, max_iteration=50,reset=True)
+
+#run (communication inside after each time_click)
+controller.run(render=True, max_iteration=200,reset=True)
 print("Thats all")
 
