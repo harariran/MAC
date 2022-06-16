@@ -52,6 +52,21 @@ class DecentralizedComController(Controller):
 
         return joint_action, list(joint_message)
 
+    def send_recieve(self):
+        # perform send messages
+        joint_message = []
+        for agent_name in self.agents.keys():
+            joint_message.append( self.agents[agent_name].transmit())
+        print(f"send_recieve - Joint message: {[x.data for x in joint_message]}")
+
+        # perform recieve messages:
+        out_message_dict = self.COM_model.update_delievery(joint_message, self.agents)
+        for agent_name in self.agents.keys():
+            self.agents[agent_name].recieve(None, out_message_dict[agent_name])
+
+
+
+
 
 
     def run(self, render=False, max_iteration=None, reset=False):
@@ -82,7 +97,7 @@ class DecentralizedComController(Controller):
             if max_iteration is not None and index > max_iteration:
                 break
 
-            # get actions for each agent to perform
+            # get actions for each agent to perform, and messages
             joint_action , joint_message  = self.get_joint_action_messages(observation)
 
 

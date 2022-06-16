@@ -3,6 +3,7 @@ import math
 from src.Communication.COM_net import COM_net
 from src.agents.agent import DecisionMaker, Action_message_agent, Agent_Com
 from src.control.Controller_COM import DecentralizedComController
+from src.decision_makers.planners.MA_com_planner import Astar_message_DM
 from src.decision_makers.planners.map_planner import AstarDM
 from src.environments.env_wrapper import EnvWrappper
 from multi_taxi import MultiTaxiEnv
@@ -29,10 +30,31 @@ MAP = [
     "+-----------------------+",
 ]
 
+TAXI_pickup_dropoff_REWARDS = dict(
+    step=-1,
+    no_fuel=-1,
+    bad_pickup=-1,
+    bad_dropoff=-1,
+    bad_refuel=-1,
+    bad_fuel=-1,
+    pickup=100,
+    standby_engine_off=0,
+    turn_engine_on=-1,
+    turn_engine_off=-1,
+    standby_engine_on=0,
+    intermediate_dropoff=100,
+    final_dropoff=100,
+    hit_wall=-1,
+    collision=-1,
+    collided=-1,
+    unrelated_action=-1,
+)
+
 """
 Builds Multi_taxi env
 """
-env = MultiTaxiEnv(num_taxis=2, num_passengers=2, domain_map=MAP, observation_type='symbolic')
+m = MAP2
+env = MultiTaxiEnv(num_taxis=2, num_passengers=2, domain_map=m, observation_type='symbolic',rewards_table=TAXI_pickup_dropoff_REWARDS)
 
 # env = SingleTaxiWrapper(env)
 obs = env.reset()
@@ -67,17 +89,20 @@ in order to use com module:
 
 class Heading_message_agent(Agent_Com):
 
-    def __init__(self, decision_maker : AstarDM , sensor_function =None, message_filter = None, AgentName = None, bandW = math.inf, union_recieve = True):
+    def __init__(self, decision_maker : Astar_message_DM , sensor_function =None, message_filter = None, AgentName = None, bandW = math.inf, union_recieve = False):
         super().__init__(decision_maker , sensor_function, message_filter, AgentName, bandW, union_recieve)
         self.last_action = None
+        self.last_message = None
 
     def set_data_func(self, obs):
         data = (self.decision_maker.taking_passenger,len(self.decision_maker.active_plan))
         return data
 
-    # todo - implement your recive_func
+    # implement our recive_func
     def set_recive_func(self, obs, message):
-        pass
+        self.last_message = message
+        self.decision_maker.save_last_message(message)
+        # self.decision_maker.updateplan_message(message)
 
     # saves last action of the agent - not necessary for com module
     def set_last_action(self, action):
@@ -88,7 +113,7 @@ class Heading_message_agent(Agent_Com):
 
 # after having our com-Astar-agents class we can set our env agents into a dicentralized_agents dict
 env_agents = environment.get_env_agents()
-decentralized_agents = {agent_name: Heading_message_agent(AstarDM(env ,single_plan=True, Taxi_index=int(agent_name[-1]), domain_map=MAP) ,AgentName=agent_name)             # Agent(LearningDecisionMaker(env.action_space))  # can use diffrent DM
+decentralized_agents = {agent_name: Heading_message_agent(Astar_message_DM(env ,single_plan=True, Taxi_index=int(agent_name[-1]), domain_map=m) ,AgentName=agent_name)             # Agent(LearningDecisionMaker(env.action_space))  # can use diffrent DM
                         for agent_name in env_agents}
 
 
@@ -106,6 +131,9 @@ controller = DecentralizedComController(environment, decentralized_agents, com)
 """
 activate 
 """
-controller.run(render=True, max_iteration=50)
+#communicate first
+controller.send_recieve()
+#run (communication inside after each time_clicl
+controller.run(render=True, max_iteration=20)
 print("Thats all")
 

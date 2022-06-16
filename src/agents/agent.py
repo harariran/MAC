@@ -2,7 +2,6 @@ import math
 from abc import ABC, abstractmethod
 
 import numpy
-
 from src.Communication.COM_net import Message
 
 
@@ -47,7 +46,6 @@ class Agent_Com(Agent, ABC):
     def union_Recieve_func(self, obs : numpy.ndarray, messages : list):
         # print(f"{type(messages)}")
         all_m = [m.data for m in messages]
-        temp = numpy.ndarray(all_m)
         obs = numpy.append(obs,all_m)
         return obs
 
@@ -58,7 +56,12 @@ class Agent_Com(Agent, ABC):
             # use for filter message
 
         if self.union_recieve:
-            data = self.union_Recieve_func(obs, message)
+            try:
+                data = self.union_Recieve_func(obs, message)
+                # print("message recieved as [obs+message]")
+            except:
+                data = [obs,message]
+                # print("message recieved as [obs,message]")
         else:
             data = self.set_recive_func(obs, message)
         self.new_obs = data
