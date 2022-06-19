@@ -334,15 +334,26 @@ class Multi_Taxi_Task_Wrapper(Wrapper):
                         while isinstance(a_act,list):
                             a_act = a_act[0]
                     except:
-                        taxi_loc, pass_loc, pass_dest, pass_stt = self.get_single_taxi_pass(index,act)
-                        plan = self.plan_single(taxi_loc,pass_loc,pass_dest, pass_stt)
-                        a_plan = self.agents_plans[index][1]
-                        for p in plan:
-                            a_plan.append[p]
-                        a_act = str_to_int(a_plan.popleft())
-                        while isinstance(a_act,list):
-                            a_act = a_act[0]
                         changed = True
+                        taxi_loc, pass_loc, pass_dest, pass_stt = self.get_single_taxi_pass(index, act)
+                        if pass_stt == 2:
+                            plan = self.plan_all_way(taxi_loc, pass_loc, pass_dest, act)  # act - pass#
+                            a_plan = deque()
+                            self.agents_plans[index][1] = a_plan
+                            for p in plan:
+                                a_plan.append(p)
+                            a_act = str_to_int(a_plan.popleft())
+                            while isinstance(a_act, list):
+                                a_act = a_act[0]
+                        elif pass_stt == index + 3:
+                            plan = self.plan_drop_only(taxi_loc, pass_dest, act)  # act - pass#
+                            a_plan = deque()
+                            self.agents_plans[index][1] = a_plan
+                            for p in plan:
+                                a_plan.append(p)
+                            a_act = str_to_int(a_plan.popleft())
+                        else:
+                            a_act = self.env.env.num_actions - 1  # stby action
                 else:
                     changed = True
                     taxi_loc, pass_loc, pass_dest, pass_stt = self.get_single_taxi_pass(index, act)
