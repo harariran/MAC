@@ -4,8 +4,8 @@ many types of decoders
 """
 
 
-from gym import Wrapper
-from gym.spaces import MultiDiscrete, Discrete
+from gym import Wrapper, RewardWrapper, ActionWrapper, ObservationWrapper
+from gym.spaces import MultiDiscrete, Discrete, Box, MultiBinary
 # 'Deep Model Related Imports'
 from torch.nn.functional import one_hot
 import torch

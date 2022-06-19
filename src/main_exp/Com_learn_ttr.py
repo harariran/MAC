@@ -3,9 +3,10 @@ import math
 from src.Communication.COM_net import COM_net
 from src.agents.agent import DecisionMaker, Action_message_agent, Agent_Com
 from src.control.Controller_COM import DecentralizedComController
-from src.decision_makers.planners.MA_com_planner import Astar_message_DM
+from src.decision_makers.planners.Com_High_level_Planner import Astar_message_highlevel_DM
 from src.decision_makers.planners.map_planner import AstarDM
 from src.environments.env_wrapper import EnvWrappper
+from src.environments.hirarchical_Wrapper import Multi_Taxi_Task_Wrapper
 from multi_taxi import MultiTaxiEnv
 
 
@@ -53,8 +54,8 @@ TAXI_pickup_dropoff_REWARDS = dict(
 """
 Builds Multi_taxi env
 """
-m = MAP
-env = MultiTaxiEnv(num_taxis=3, num_passengers=5, domain_map=m, observation_type='symbolic',rewards_table=TAXI_pickup_dropoff_REWARDS ,option_to_stand_by=True)
+m = MAP2
+env = MultiTaxiEnv(num_taxis=2, num_passengers=3, domain_map=m, observation_type='symbolic',rewards_table=TAXI_pickup_dropoff_REWARDS ,option_to_stand_by=True)
 
 # env = SingleTaxiWrapper(env)
 obs = env.reset()
@@ -74,7 +75,7 @@ env.possible_agents = [agent for agent in env.agents]
 #
 # # env = SingleTaxiWrapper(env)
 # # env = SinglePassengerPosWrapper(environment, taxi_pos=[0, 0])
-environment = EnvWrappper(env, env.agents)
+environment =  Multi_Taxi_Task_Wrapper(EnvWrappper(env, env.agents))
 #
 print('EnvironmentWrapper created')
 
@@ -89,7 +90,7 @@ in order to use com module:
 
 class Heading_message_agent(Agent_Com):
 
-    def __init__(self, decision_maker : Astar_message_DM , sensor_function =None, message_filter = None, AgentName = None, bandW = math.inf, union_recieve = False):
+    def __init__(self, decision_maker : Astar_message_highlevel_DM , sensor_function =None, message_filter = None, AgentName = None, bandW = math.inf, union_recieve = False):
         super().__init__(decision_maker , sensor_function, message_filter, AgentName, bandW, union_recieve)
         self.last_action = None
         self.last_message = None
@@ -113,7 +114,7 @@ class Heading_message_agent(Agent_Com):
 
 # after having our com-Astar-agents class we can set our env agents into a dicentralized_agents dict
 env_agents = environment.get_env_agents()
-decentralized_agents = {agent_name: Heading_message_agent(Astar_message_DM(env ,single_plan=True, Taxi_index=int(agent_name[-1]), domain_map=m) ,AgentName=agent_name)             # Agent(LearningDecisionMaker(env.action_space))  # can use diffrent DM
+decentralized_agents = {agent_name: Heading_message_agent(Astar_message_highlevel_DM(env ,single_plan=True, Taxi_index=int(agent_name[-1]), domain_map=m) ,AgentName=agent_name)             # Agent(LearningDecisionMaker(env.action_space))  # can use diffrent DM
                         for agent_name in env_agents}
 
 
@@ -136,5 +137,15 @@ controller.send_recieve()
 
 #run (communication inside after each time_click)
 controller.run(render=True, max_iteration=200,reset=True)
+# SHOW REWARDS
+reward = controller.total_rewards
+totals = {}
+for r in reward[0]:
+    totals[r] = 0
+total=0
+for r in reward:
+    for key, value in r.items():
+        totals[key]+=value
+        total+=value
+print(f"----------------------------------\n total reward of all agents: {total}, {totals} \n----------------------------------")
 print("Thats all")
-

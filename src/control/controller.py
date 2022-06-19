@@ -52,7 +52,8 @@ class Controller(ABC):
             self.environment.get_env().render()
 
     def perform_joint_action(self, joint_action):
-        return self.environment.get_env().step(joint_action)
+        return self.environment.step(joint_action)
+        # return self.environment.get_env().step(joint_action)
 
     def get_joint_action(self, observation):
         pass
@@ -64,8 +65,8 @@ class Controller(ABC):
         if symbolic:
 
             for agent_name in self.agents.keys():
-                print(f"{agent_name} obs:\n {observation[agent_name]} , action: {self.environment.get_env().index_action_dictionary[joint_action[agent_name]]}")
-
+                print(f"{agent_name} obs:\n {observation[agent_name]} , action: {joint_action[agent_name]}")
+                # print(f"{agent_name} obs:\n {observation[agent_name]} , action: {self.environment.get_env().index_action_dictionary[joint_action[agent_name]]}")
         else:
             print(f"{ type(list(observation.values())[0])}")
             fig = plt.figure(figsize=(16,4))
