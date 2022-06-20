@@ -269,9 +269,15 @@ class Multi_Taxi_Task_Wrapper(Wrapper):
     def __init__(self, env : EnvWrappper):
         super().__init__(env)
         # 1 for each pass, 1 for defualt/stndby
-        self.action_space = MultiDiscrete([env.env.num_passengers + 1] * self.env.env.num_taxis)
-        self.state_multi = env.env.state
+        if env.env.num_taxis==1:
+            self.single=True
+            self.action_space = Discrete(env.env.num_passengers + 1)
+        else:
+            self.single = False
+            self.action_space = MultiDiscrete([env.env.num_passengers + 1] * self.env.env.num_taxis)
+        self.observation_space = env.env.observation_space
         self.agents_plans = { str_to_int(agent) : [0,deque()] for agent in self.env_agents}
+        self.index_action_dictionary = { 0 : 'stbdy', 1:'handling pass 1', 2:'handling pass 2', 3:'handling pass 3', 4:'handling pass 4', 5:'handling pass 5' }
 
     def plan_all_way(self,taxi_pos,pass_loc,pass_dst, pass_indx):
         taxi_P = MultiTaxiEnv(num_taxis=1, num_passengers=1, domain_map=self.env.env.domain_map)
@@ -294,8 +300,10 @@ class Multi_Taxi_Task_Wrapper(Wrapper):
     def reset(self):
         # run `reset` as usual.
         # returned value is a dictionary of observations with a single entry
-        obs = self.env.reset()
+        obs = self.env.env.reset()
         self.agents_plans = {i : [0,deque()] for i in range(len(self.env_agents))}
+        if self.single: obs= obs['taxi_0']
+        return obs
 
     def get_single_taxi_pass(self,taxi_index,pass_index):
         taxi_loc = self.env.env.state[0][taxi_index]
@@ -317,6 +325,7 @@ class Multi_Taxi_Task_Wrapper(Wrapper):
         return j_act
 
     def step(self,  joint_action):
+        if self.single: joint_action=[joint_action]
         atom_joint_action = []
         changed = False
         if isinstance(joint_action,dict):
@@ -392,6 +401,9 @@ class Multi_Taxi_Task_Wrapper(Wrapper):
             elif (cur_status[value-1] == 1) and (last_status[value-1]== 3 + str_to_int(key)):
                 rewards[key] = 100
             else: rewards[key] = -1
+        if self.single:
+            rewards = sum(r for r in rewards.values())
+            return (ret[0]['taxi_0'],rewards,ret[2]['taxi_0'],ret[3])
         return (ret[0],rewards,ret[2],ret[3])
 
 

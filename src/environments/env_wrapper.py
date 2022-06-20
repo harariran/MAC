@@ -177,6 +177,7 @@ class EnvWrappper:
         self.env_agents = env_agents
         self.num_observation_spaces = num_observation_spaces
         self.num_actions = num_actions
+        self.metadata = None
 
     def get_env(self):
         return self.env
