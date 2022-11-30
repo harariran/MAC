@@ -59,10 +59,11 @@ print('EnvironmentWrapper created')
 # making agent class that communicates and heads towards 1 passenger (pickup->dropoff)
 """
 in order to use com module: 
-    - implement Agent_com class (inherit from Agent_com
-    - make sure to implement set_data_func - that decides what is the data that the agent will transmit whenever it called
-    - u can implement your recieve_func - that decides what to do with a recieved data
-        defualt is the union_func that add the message data to the observation 
+    - implement Agent_com class (inherit from Agent_com)
+        - make sure to implement set_data_func - that decides what is the data that the agent will transmit whenever it called
+        - u can implement your recieve_func - that decides what to do with a recieved data
+            defualt is the union_func that add the message data to the observation 
+    - use DecentralizedComController to execute your com module with all your Agent_com agents in your environment and
 """
 
 class Heading_message_agent(Agent_Com):
