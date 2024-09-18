@@ -2,7 +2,10 @@
 Wrappers for Multi-Taxi domain
 many types of decoders
 """
+import copy
 
+from multi_taxi.env import multi_taxi_v0 as TaxiEnv
+from multi_taxi.env.MultiTaxiEnv import Passenger, Taxi
 
 from gym import Wrapper, RewardWrapper, ActionWrapper, ObservationWrapper
 from gym.spaces import MultiDiscrete, Discrete, Box, MultiBinary
@@ -10,6 +13,45 @@ from gym.spaces import MultiDiscrete, Discrete, Box, MultiBinary
 from torch.nn.functional import one_hot
 import torch
 import numpy as np
+
+def env_pos_change(env : TaxiEnv , obj_iterable):
+    s = copy.deepcopy(env.state())
+    for obj in obj_iterable:
+        if isinstance(obj, Passenger):
+            for p in s.passengers:
+                if p.id==obj.id:
+                    p.location=obj.location
+                    p.destination=obj.destination
+        elif isinstance(obj, Taxi):
+            for t in s.taxis:
+                if t.id==obj.id:
+                    t.location=obj.location
+    env.unwrapped.set_state(s)
+    return env
+
+
+class Pruned_action_env(Wrapper):
+
+    def __init__(self, env, pruned_action):
+        self.env = env
+        # assert env.agents == 1
+        super().__init__(env)
+        self.pruned_action =pruned_action
+        self.pruned = False
+
+    def step(self, action):
+        if self.pruned:
+            self.pruned = True
+            if self.action == action:
+                obs, r, d, i = self.env.step(-1)
+            else:
+                obs, r, d, i = self.env.step(action)
+        else:
+            obs, r, d, i = self.env.step(action)
+        return obs, r, d, i
+
+
+
 
 
 class ObsWrapper(Wrapper):
@@ -95,7 +137,8 @@ class SingleTaxiWrapper(Wrapper):
     """
 
     def __init__(self, env):
-        assert env.num_taxis == 1
+        self.env = env
+        # assert env.agents == 1
         super().__init__(env)
 
     def reset(self):
@@ -112,12 +155,18 @@ class SingleTaxiWrapper(Wrapper):
 
         return ret
 
+    def render(self):
+        # render
+        self.env.render()
+
     def step(self, action):
         # step using "joint action" of a single agnet as a dictionary
         step_rets = self.env.step({self.env.taxis_names[0]: action})
 
         # unpack step return values from their dictionaries
         return tuple(next(iter(ret.values())) for ret in step_rets)
+
+
 
 
 class SinglePassengerPosWrapper(Wrapper):
@@ -171,7 +220,7 @@ class TaxiObsPrepWrapper(Wrapper):
 
         return MultiDiscrete(new_obs_space_v)
 
-class EnvWrappper:
+class EnvWrappper ():
     def __init__(self, env, env_agents, num_observation_spaces=1, num_actions=1):
         self.env = env
         self.env_agents = env_agents
@@ -195,12 +244,13 @@ class EnvWrappper:
         return self.env.step(joint_action)
 
 
-class EnvWrappperGym:
+class EnvWrappperGym(Wrapper):
 
     def __init__(self, env, needs_conv=False):
-        super(EnvWrappperGym, self).__init__(env, self.env.possible_agents,
-                                             self.env.observation_spaces[env.possible_agents[0]].shape,
-                                             self.env.action_spaces[env.possible_agents[0]].n)
+        self.env = env
+        self.obs_spaces = self.env.observation_spaces
+        self.obs_spaces = self.obs_spaces[env.possible_agents[0]]
+        super().__init__(env)
         self.needs_conv = needs_conv
 
     def get_needs_conv(self):

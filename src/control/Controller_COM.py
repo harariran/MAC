@@ -4,7 +4,7 @@ from src.Communication.COM_net import COM_net
 from src.agents.agent import Agent_Com, Action_message_agent
 from src.agents.agent import Agent, RandomDecisionMaker
 from src.environments.env_wrapper import EnvWrappper, EnvWrappperGym
-from multi_taxi.taxi_environment import TaxiEnv
+from multi_taxi import multi_taxi_v0 as TaxiEnv
 
 
 class DecentralizedComController(Controller):

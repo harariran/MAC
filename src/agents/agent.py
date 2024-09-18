@@ -17,7 +17,6 @@ class Agent:
         return self.decision_maker
 
     def get_observation(self, state):
-
         return self.sensor_function(state)
 
 
@@ -113,7 +112,7 @@ class RandomDecisionMaker:
     def __init__(self, action_space):
         self.space = action_space
 
-    def get_action(self, observation):
+    def get_action(self, observation=None):
         if type(self.space) == dict:
             return {agent: self.space[agent].sample() for agent in self.space.keys()}
         else:

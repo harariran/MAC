@@ -43,6 +43,9 @@
 
 import sys
 import numpy as np
+from multi_taxi.env.state import MultiTaxiEnvState
+from multi_taxi.utils.types import Event
+
 from src.control.controller_decentralized import DecentralizedController
 from src.control.controller_centralized import CentralizedController
 from src.agents.agent import Agent, RandomDecisionMaker
@@ -52,6 +55,7 @@ from src.environments.env_wrapper import EnvWrappper, EnvWrappperGym
 import matplotlib.pyplot as plt
 from multi_taxi import multi_taxi_v0 as TaxiEnv
 from multi_taxi import ObservationType
+from src.decision_makers.MA_decision_makers.MA_AddOn_DM import *
 
 
 # Now, let's create a multi-taxi environment and its MAC wrapper. 
@@ -75,7 +79,6 @@ from multi_taxi import ObservationType
 # print()
 # print("Image Observation:")
 
-
 # env = TaxiEnv.parallel_env(num_taxis=4, num_passengers=3, pickup_only=True,  observation_type='symbolic', render_mode='human')
 env = TaxiEnv.parallel_env(num_taxis=4,
                            num_passengers=3,
@@ -84,8 +87,13 @@ env = TaxiEnv.parallel_env(num_taxis=4,
                            field_of_view=[None, None, None, 4],
                            render_mode='human')
 
+
+
 obs = env.reset()
 
+# # changing reward table
+# for k in env.unwrapped.reward_table.values():
+#     k[Event.COLLISION] = -50
 
 state = env.state()
 env.render()
@@ -152,14 +160,37 @@ print('EnvironmentWrapper created')
 # In[13]:
 
 
-    # random agents:
+# random agents:
 decentralized_agents = {agent_name: Agent(RandomDecisionMaker(env.env.action_spaces[agent_name]))           #can use diffrent DM
           for agent_name in env.env.agents}
 
-    # add 1 PPO agent
-ag_name = 'taxi_0'
-ag = Agent(PPODecisionMaker(env.env.action_spaces[ag_name],env.env,ag_name))
-decentralized_agents[ag_name] = ag
+def man_dist(point_a,point_b):
+    # calculate manhatten distance from 2 2D points
+    return abs(point_a[0]-point_b[0])+abs(point_a[1]-point_b[1])
+
+# check if some other Taxi is close to named taxi - conflict function over state
+def cf_close_to_other(state : MultiTaxiEnvState,name,dist = 2,**kwargs):
+    t_dict = state.taxi_by_name
+    my_pos = t_dict[name].location
+    for t in t_dict.keys():
+        if t==name: continue
+        if man_dist(my_pos,t_dict[t].location)<=dist:
+            return True
+    return False
+
+# create all agents
+for agent_name in env.env.agents:
+    ag_name = agent_name
+    # cf1 = Conflict_Function(None, cf_close_to_other,ag_name,True, man=5, dist=3)
+    cf1 = Conflict_Function(func_obs=None, func_state=cf_close_to_other,name=ag_name,is_binary=True, dist=3)
+    dm = MA_AddOn_DM(my_DM=PPODecisionMaker(env.env.action_spaces[ag_name],env.env,ag_name),
+                     MA_DM=RandomDecisionMaker(env.env.action_spaces[ag_name]),
+                     conflict_function=cf1,
+                     action_space=env.env.action_spaces[ag_name])
+
+    ag = Agent(decision_maker=dm, AgentName=ag_name)
+
+    decentralized_agents[ag_name] = ag
 
 
 
@@ -177,6 +208,10 @@ decentralized_agents[ag_name] = ag
 # Let's run the code
 
 # In[14]:
+
+
+
+
 
 
 controller = DecentralizedController(env, decentralized_agents)

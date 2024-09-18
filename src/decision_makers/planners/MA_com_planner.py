@@ -22,7 +22,8 @@ import time
 import numpy as np
 
 from IPython.display import clear_output
-from multi_taxi import MultiTaxiEnv
+from multi_taxi import multi_taxi_v0 as TaxiEnv
+from multi_taxi import ObservationType
 from AI_agents.Search.best_first_search import breadth_first_search, a_star
 from src.decision_makers.planners.MAP import MapProblem
 from copy import deepcopy
@@ -142,7 +143,7 @@ generate simulation in order to solve single plan of a taxi and return the plan
 """
 
 def joint_simulation(state, h, print_simulation=False, domain_m=MAP2):
-    taxi_P = MultiTaxiEnv(num_taxis=len(state[0]), num_passengers=len(state[2]), domain_map=domain_m)
+    taxi_P = TaxiEnv(num_taxis=len(state[0]), num_passengers=len(state[2]), domain_map=domain_m)
     map_p = MapProblem(taxi_P, list_to_tuple(state))
     map_p.set_state(state)
 
@@ -297,9 +298,9 @@ class Astar_message_DM(DecisionMaker):
         - when dropoff (out of active_plan) -> replan for the next available passengers
 
     """
-    def __init__(self,env : MultiTaxiEnv, single_plan = True, Taxi_index=0, domain_map=MAP2, defualt_action = "last_action"):
+    def __init__(self,env : TaxiEnv, single_plan = True, Taxi_index=0, domain_map=MAP2, defualt_action = "last_action"):
         if (defualt_action == "last_action"):
-            self.defualt_action = env.action_space.n-1
+            self.defualt_action = env.action_spaces['taxi_'+str(Taxi_index)].n-1
         else: self.defualt_action = 0
         self.last_message = None
         self.changed = False
@@ -378,7 +379,7 @@ class Astar_message_DM(DecisionMaker):
             if state[4][i]==1: finished_pass.append(i)
             init_states.append([state[0], state[1], [state[2][i]], [state[3][i]], [state[4][i]]])
 
-        taxi_P = MultiTaxiEnv(num_taxis=1, num_passengers=1, domain_map=self.map)
+        taxi_P = TaxiEnv(num_taxis=1, num_passengers=1, domain_map=self.map)
 
         if len(init_states) == 0:
             # print(f"agent_{self.Taxi_index}: no plan / no more available passengers")
@@ -449,7 +450,7 @@ class Astar_message_DM(DecisionMaker):
 
 
 if __name__ == '__main__':
-    env = MultiTaxiEnv(num_taxis=2, num_passengers=2, domain_map=MAP2, observation_type='symbolic')
+    env = TaxiEnv.parallel_env(num_taxis=2, num_passengers=2, domain_map=MAP2, observation_type='symbolic',render_mode='human')
 
     # env = SingleTaxiWrapper(env)
     obs = env.reset()
@@ -460,16 +461,12 @@ if __name__ == '__main__':
     # print(f"{a}")
     # b = planner.get_action(obs)
 
-
-    # # Make sure it works with our API:
-    env.agents = env.taxis_names
-    # print(f"{env.agents}\n")
-    env.action_spaces = {
-        agent_name: env.action_space for agent_name in env.agents
-    }
-    env.observation_spaces = {
-        agent_name: env.observation_space for agent_name in env.agents
-    }
+    # env.action_spaces = {
+    #     agent_name: env.action_space for agent_name in env.agents
+    # }
+    # env.observation_spaces = {
+    #     agent_name: env.observation_space for agent_name in env.agents
+    # }
     env.possible_agents = [agent for agent in env.agents]
     #
     # # env = SingleTaxiWrapper(env)
@@ -480,7 +477,7 @@ if __name__ == '__main__':
     #
     #
     env_agents = environment.get_env_agents()
-    decentralized_agents = {agent_name: Action_message_agent(AstarDM(env,single_plan=False),AgentName=agent_name)             # Agent(LearningDecisionMaker(env.action_space))  # can use diffrent DM
+    decentralized_agents = {agent_name: Action_message_agent(Astar_message_DM(env,single_plan=False),AgentName=agent_name)             # Agent(LearningDecisionMaker(env.action_space))  # can use diffrent DM
                             for agent_name in env_agents}
     #
     # # Here, the action to perform is collected by each agent

@@ -1,6 +1,5 @@
 from .controller import Controller
-
-
+from ..decision_makers.MA_decision_makers.MA_AddOn_DM import MA_AddOn_DM, MA_prune_DM
 
 
 class DecentralizedController(Controller):
@@ -20,11 +19,18 @@ class DecentralizedController(Controller):
         """
 
         joint_action = {}
+
         for agent_name in self.agents.keys():
-            print(f"{observation[agent_name]}")       # check use
-            action = self.agents[agent_name].get_decision_maker().get_action(observation[agent_name])
-            joint_action[agent_name] = action
-            # print(f"agent:{agent_name}, action: {action}\n")
+                # print(f"{observation[agent_name]}")       # check use
+
+                #for MA_addon only
+                if isinstance(self.agents[agent_name].get_decision_maker(),MA_AddOn_DM) or isinstance(self.agents[agent_name].get_decision_maker(),MA_prune_DM) :
+                    action = self.agents[agent_name].get_decision_maker().get_action(observation[agent_name],self.environment.env.state())
+                else:
+                    action = self.agents[agent_name].get_decision_maker().get_action(observation[agent_name])
+                joint_action[agent_name] = int(action)
+                # print(f"agent:{agent_name}, action: {action}\n")
+
 
         # if self.render:
         #     self.render_obs_next_action(joint_action,observation)

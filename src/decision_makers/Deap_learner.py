@@ -1,3 +1,5 @@
+from multi_taxi import ObservationType
+
 from src.agents.agent import Agent, DecisionMaker
 # 'Environment Related Imports'
 # import tqdm
@@ -5,7 +7,7 @@ from src.agents.agent import Agent, DecisionMaker
 import PIL
 import matplotlib.pyplot as plt
 
-from multi_taxi.taxi_environment import TaxiEnv
+from multi_taxi.env import multi_taxi_v0 as TaxiEnv
 from src.environments.env_wrapper import*
 from gym.spaces import MultiDiscrete
 
@@ -74,7 +76,13 @@ def from_RGBarray_to_image(obs):
 
 if __name__ == '__main__':
     # check code:
-    env = TaxiEnv(num_taxis=1, observation_type='image')  # pickup_only=True,
+    # env = TaxiEnv(num_taxis=1, observation_type='image')  # pickup_only=True,
+    env = TaxiEnv.parallel_env(num_taxis=1,
+                               num_passengers=3,
+                               pickup_only=False,
+                               observation_type=ObservationType.SYMBOLIC,
+                               render_mode='human')
+    obs = env.reset()
     env = SingleTaxiWrapper(env)
     obs = env.reset()
 
