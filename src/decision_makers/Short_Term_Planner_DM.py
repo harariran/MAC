@@ -1,34 +1,19 @@
 import numpy
-import torch as th
-from multi_taxi import ObservationType
-from multi_taxi.env import reward_tables
-from torch.distributions import Categorical
 
 from src.agents.agent import Agent, DecisionMaker, RandomDecisionMaker
 from src.environments.env_wrapper import*
-# 'Environment Related Imports'
-# import tqdm
-# import gym
-import PIL
-import matplotlib.pyplot as plt
 
-from multi_taxi.env import single_taxi_v0 as SingleTaxi
-from multi_taxi import wrappers as Twrappers
 from multi_taxi.world.entities import Taxi
-from gym import Wrapper
-import time
-from IPython.display import clear_output
+from multi_taxi import multi_taxi_v0 as TaxiEnv, Action
+from multi_taxi import ObservationType
+from itertools import product
 
-from IPython.core.display_functions import clear_output
+
 from ai_dm.Environments.gymnasium_envs.gymnasium_problem import GymnasiumProblemS
 from ai_dm.Search.best_first_search import best_first_search, breadth_first_search, depth_first_search, a_star, depth_first_search_l
 import ai_dm.Search.utils as utils
 import ai_dm.Search.defs as defs
 import ai_dm.Search.heuristic as heuristic
-from multi_taxi import multi_taxi_v0 as TaxiEnv, Action
-from multi_taxi import ObservationType
-from itertools import product
-
 
 # copy Taxi_b parameters to Taxi_a (without the name)
 def set_same_taxi_values(Taxi_a:Taxi, Taxi_b:Taxi):
@@ -212,6 +197,9 @@ class ST_Planner(DecisionMaker):
     #     # temp_env.action_space = temp_env.action_spaces[temp_env.possible_agents[0]]
     #     # temp_env.action_space = Discrete(temp_env.action_space.n)
     #     temp_env.env.render()
+
+
+
 
 # fix observation space if not fit to trained dimension
     def fit_obs(self, obs):
