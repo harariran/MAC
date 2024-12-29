@@ -220,7 +220,7 @@ class TaxiObsPrepWrapper(Wrapper):
 
         return MultiDiscrete(new_obs_space_v)
 
-class EnvWrappper ():
+class EnvWrappper(Wrapper):
     def __init__(self, env, env_agents, num_observation_spaces=1, num_actions=1):
         self.env = env
         self.env_agents = env_agents
