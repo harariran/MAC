@@ -1,1 +1,4 @@
 /src/environments/.ipynb_checkpoints/
+**/venv
+oryx-build-commands.txt
+**/__pycache__
