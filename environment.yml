@@ -26,3 +26,4 @@ dependencies:
     - jax==0.4.37
     - flax>=0.10.1
     - optax
+    - tensorflow
