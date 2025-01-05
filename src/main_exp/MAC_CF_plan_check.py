@@ -27,6 +27,9 @@
 # 
 # 
 
+
+
+
 # In[1]:
 
 
@@ -57,7 +60,7 @@ import matplotlib.pyplot as plt
 from multi_taxi import multi_taxi_v0 as TaxiEnv
 from multi_taxi import ObservationType
 from multi_taxi import wrappers as WP
-from src.decision_makers.MA_decision_makers.MA_AddOn_DM import *
+from src.decision_makers.MA_decision_makers.MA_AddOn_DM import MA_prune_DM, Conflict_Function, pickup_DM
 
 
 # some helpful functions
@@ -107,6 +110,8 @@ except:
     env.agents = env.possible_agents
     env = EnvWrappper(env, env.agents)
 print('EnvironmentWrapper created')
+
+
 
 
 

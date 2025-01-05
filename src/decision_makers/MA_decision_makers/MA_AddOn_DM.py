@@ -250,8 +250,6 @@ class MA_prune_DM(DecisionMaker, ABC):
             self.last_dm = self.my_DM
             return self.my_DM.get_action(observation)
 
-
-
     def is_conflict_on(self):
         return self.conflict_flag
 
